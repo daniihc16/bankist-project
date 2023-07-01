@@ -56,3 +56,63 @@ const inputTransferAmount = document.querySelector('.form__input--amount');
 const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
+
+// Creates the usernames for each account owner with the first letter of their names
+const createUsernames = function (accounts) {
+    accounts.forEach(function (acc) {
+        acc.username = acc.owner.toLowerCase().split(' ').map(name => name[0]).join();
+    });
+}
+
+// Displays movements in the containerMovements element
+const displayMovements = function(movements, sort = false) {
+    containerMovements.innerHTML = '';
+
+    movements.forEach(function(mov, i) {
+        const type = mov > 0 ? 'deposit' : 'withdrawal';
+        const html = `
+        <div class="movements__row">
+            <div class="movements__type movements__type--${type}">${i+1} ${type}</div>
+            <div class="movements__date">3 days ago</div>
+            <div class="movements__value">${mov}€</div>
+        </div>`;
+
+        containerMovements.insertAdjacentHTML('afterbegin', html);
+    })
+}
+
+// Displays the balance in the labelBalance element
+const calcDisplayBalance = function(movements) {
+    labelBalance.textContent = `${movements.reduce((acc, mov) => acc + mov, 0)}€`;
+}
+
+// Displays the summary in the labelSumIn, labelSumOut, labelSumInterest elements
+const calcDisplaySummary = function(account) {
+    labelSumIn.textContent = `${account.movements.filter(mov => mov > 0).reduce((acc, mov) => acc + mov)}€`
+    labelSumOut.textContent = `${Math.abs(account.movements.filter(mov => mov < 0).reduce((acc, mov) => acc + mov))}€`
+    labelSumInterest.textContent = `${account.movements.filter(mov => mov > 0)
+                                        .map((mov => (mov * account.interestRate) / 100))
+                                        .reduce((acc, mov) => acc + mov)}€`
+}
+
+// 
+btnLogin.addEventListener('click', function(event) {
+    // Prevent form from submitting
+    event.preventDefault();
+
+    console.log('LOGIN');
+    console.log(accounts.find(acc => acc.owner === inputLoginUsername.textContent && acc.pin === inputLoginPin.textContent));
+})
+
+
+
+
+
+
+
+const acctiveAccount = account1;
+
+createUsernames(accounts);
+displayMovements(acctiveAccount.movements);
+calcDisplayBalance(acctiveAccount.movements);
+calcDisplaySummary(acctiveAccount);
