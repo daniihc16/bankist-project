@@ -1,5 +1,4 @@
 'use strict';
-console.log('Hola');
 // Data
 const account1 = {
     owner: 'Daniel Herce',
@@ -60,15 +59,15 @@ const inputClosePin = document.querySelector('.form__input--pin');
 // Creates the usernames for each account owner with the first letter of their names
 const createUsernames = function (accounts) {
     accounts.forEach(function (acc) {
-        acc.username = acc.owner.toLowerCase().split(' ').map(name => name[0]).join();
+        acc.username = acc.owner.toLowerCase().split(' ').map(name => name[0]).join('');
     });
 }
 
 // Displays movements in the containerMovements element
-const displayMovements = function(movements, sort = false) {
+const displayMovements = function(account, sort = false) {
     containerMovements.innerHTML = '';
 
-    movements.forEach(function(mov, i) {
+    account.movements.forEach(function(mov, i) {
         const type = mov > 0 ? 'deposit' : 'withdrawal';
         const html = `
         <div class="movements__row">
@@ -82,8 +81,8 @@ const displayMovements = function(movements, sort = false) {
 }
 
 // Displays the balance in the labelBalance element
-const calcDisplayBalance = function(movements) {
-    labelBalance.textContent = `${movements.reduce((acc, mov) => acc + mov, 0)}€`;
+const calcDisplayBalance = function(account) {
+    labelBalance.textContent = `${account.movements.reduce((acc, mov) => acc + mov, 0)}€`;
 }
 
 // Displays the summary in the labelSumIn, labelSumOut, labelSumInterest elements
@@ -97,22 +96,27 @@ const calcDisplaySummary = function(account) {
 
 // 
 btnLogin.addEventListener('click', function(event) {
-    // Prevent form from submitting
+    // Prevent form from submitting: Default behaviour of the form is to submit the data to the server when the button is clicked and the page is refreshed
     event.preventDefault();
 
-    console.log('LOGIN');
-    console.log(accounts.find(acc => acc.owner === inputLoginUsername.textContent && acc.pin === inputLoginPin.textContent));
+    const loggedAccount = accounts.find(acc => acc.username === inputLoginUsername.value && acc.pin === Number(inputLoginPin.value));
+    if (!loggedAccount) console.log('LOGIN ATTEMPT', inputLoginUsername.value, inputLoginPin.value);
+    else {
+        console.log(`LOGIN SUCCESSFUL as ${loggedAccount.owner}`);
+
+        // Display UI and message
+        labelWelcome.textContent = `Welcome back, ${loggedAccount.owner.split(' ')[0]}`;
+        containerApp.style.opacity = 100;
+
+        // Clear input fields
+        inputLoginUsername.value = inputLoginPin.value = '';
+        inputLoginPin.blur();   // Removes focus from the input field so that the cursor is not blinking in the input field
+
+        
+        displayMovements(loggedAccount);
+        calcDisplayBalance(loggedAccount);
+        calcDisplaySummary(loggedAccount);
+    }
 })
 
-
-
-
-
-
-
-const acctiveAccount = account1;
-
 createUsernames(accounts);
-displayMovements(acctiveAccount.movements);
-calcDisplayBalance(acctiveAccount.movements);
-calcDisplaySummary(acctiveAccount);
