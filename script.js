@@ -29,12 +29,15 @@ const account4 = {
 };
 
 const account5 = {
-    owner: 'Sarah Smith',
+    owner: 'Silvia Sulivan',
     movements: [4430, 100, 1700, -50, -790],
     interestRate: 1.3,
     pin: 5555,
 };
 const accounts = [account1, account2, account3, account4, account5];
+
+
+
 
 // Elements
 const labelWelcome = document.querySelector('.welcome');
@@ -61,6 +64,30 @@ const inputTransferAmount = document.querySelector('.form__input--amount');
 const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
+
+
+
+
+// Updates the account balance based on the movements array
+// This would be better if it was a method of the account object, but we'd have to implement inheritance 
+// to do that and I want to do this project without inheritance
+const updateAccountBalance = function(account) {
+   
+    // If the account balance is not set, calculate it from the movements array
+    if(!account.balance) {
+
+        account.balance = account.movements.reduce((acc, mov) => acc + mov, 0);
+        account.movementsInBalance = account.movements.length;
+
+    } else if (account.movements.length > account.movementsInBalance) {
+        // If the account balance is set, update it based on the movements array
+
+        for (let i = account.movementsInBalance; i < account.movements.length; i++) {
+            account.balance += account.movements[i];
+        }
+        account.movementsInBalance = account.movements.length;
+    }
+}
 
 
 // Creates unique usernames for each account based on the owner's name and adds it to the account object.
@@ -101,7 +128,7 @@ const displayMovements = function(account, sort = false) {
 
 // Displays the balance in the labelBalance element
 const calcDisplayBalance = function(account) {
-    account.balance = account.movements.reduce((acc, mov) => acc + mov, 0);
+    updateAccountBalance(account);
     labelBalance.textContent = `${account.balance}€`;
 }
 
@@ -115,7 +142,7 @@ const calcDisplaySummary = function(account) {
                                         .reduce((acc, mov) => acc + mov)}€`
 }
 
-// Updates the UI
+// Updates the UI with the account data
 const updateUI = function(account) {
     // Display movements
     displayMovements(account);
@@ -161,10 +188,11 @@ btnTransfer.addEventListener('click', function(event) {
 
     inputTransferTo.value = inputTransferAmount.value = '';
 
-    if(amount > 0 && loggedAccount.balance >= amount && receiverAcc?.username != loggedAccount.username) {
+    // Transfer money only if the amount is positive, the logged account has enough money and the receiver account exists and is not the same as the logged account
+    if(amount > 0 && loggedAccount.balance >= amount && receiverAcc && receiverAcc?.username != loggedAccount.username) {
+        console.log(`TRANSFER SUCCESSFUL: ${amount}€ to ${receiverAcc?.username}`);
         loggedAccount.movements.push(-amount);
         receiverAcc.movements.push(amount);
-
         updateUI(loggedAccount);
     } else {
         console.log(`TRANSFER ERROR: ${amount}€ to ${receiverAcc?.username}`);
@@ -177,19 +205,30 @@ btnTransfer.addEventListener('click', function(event) {
 btnClose.addEventListener('click', function(event) {
     event.preventDefault();
 
-    if(loggedAccount.username === inputCloseUsername.value && loggedAccount.pin === Number(inputClosePin.value)) {
-        const index = accounts.findIndex(acc => acc = logged)
+    if (inputCloseUsername.value === loggedAccount.username && Number(inputClosePin.value) === loggedAccount.pin) {
+        const index = accounts.findIndex(acc => acc.username === loggedAccount.username);
+        accounts.splice(index, 1);
+
+        // Hide UI
+        containerApp.style.opacity = 0;
     }
 
-    
+    inputCloseUsername.value = inputClosePin.value = '';    
 });
 
 
 
 
+
+
+
+// Constants
 const MAX_SAME_USERNAME = 100;  // Maximum number of accounts with the same username where a number is added to the end of it
 
 let loggedAccount;  // Global variable to store the logged in account
 
+
+
+// Main code
 createUsernames(accounts);
 accounts.forEach(acc => console.log(acc));
