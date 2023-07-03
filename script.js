@@ -56,12 +56,14 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+
 // Creates the usernames for each account owner with the first letter of their names
 const createUsernames = function (accounts) {
     accounts.forEach(function (acc) {
         acc.username = acc.owner.toLowerCase().split(' ').map(name => name[0]).join('');
     });
 }
+
 
 // Displays movements in the containerMovements element
 const displayMovements = function(account, sort = false) {
@@ -80,10 +82,13 @@ const displayMovements = function(account, sort = false) {
     })
 }
 
+
 // Displays the balance in the labelBalance element
 const calcDisplayBalance = function(account) {
-    labelBalance.textContent = `${account.movements.reduce((acc, mov) => acc + mov, 0)}€`;
+    account.balance = account.movements.reduce((acc, mov) => acc + mov, 0);
+    labelBalance.textContent = `${account.balance}€`;
 }
+
 
 // Displays the summary in the labelSumIn, labelSumOut, labelSumInterest elements
 const calcDisplaySummary = function(account) {
@@ -94,12 +99,25 @@ const calcDisplaySummary = function(account) {
                                         .reduce((acc, mov) => acc + mov)}€`
 }
 
-// 
+// Updates the UI
+const updateUI = function(account) {
+    // Display movements
+    displayMovements(account);
+
+    // Display balance
+    calcDisplayBalance(account);
+
+    // Display summary
+    calcDisplaySummary(account);
+}
+
+
+// Event handler for the login button, sets the loggedAccount variable to the account that is logged in
 btnLogin.addEventListener('click', function(event) {
     // Prevent form from submitting: Default behaviour of the form is to submit the data to the server when the button is clicked and the page is refreshed
     event.preventDefault();
 
-    const loggedAccount = accounts.find(acc => acc.username === inputLoginUsername.value && acc.pin === Number(inputLoginPin.value));
+    loggedAccount = accounts.find(acc => acc.username === inputLoginUsername.value && acc.pin === Number(inputLoginPin.value));
     if (!loggedAccount) console.log('LOGIN ATTEMPT', inputLoginUsername.value, inputLoginPin.value);
     else {
         console.log(`LOGIN SUCCESSFUL as ${loggedAccount.owner}`);
@@ -113,10 +131,39 @@ btnLogin.addEventListener('click', function(event) {
         inputLoginPin.blur();   // Removes focus from the input field so that the cursor is not blinking in the input field
 
         
-        displayMovements(loggedAccount);
-        calcDisplayBalance(loggedAccount);
-        calcDisplaySummary(loggedAccount);
+        updateUI(loggedAccount);
     }
 })
+
+
+// Event handler for the transfer button
+btnTransfer.addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value);
+    const amount = Number(inputTransferAmount.value);
+
+    inputTransferTo.value = inputTransferAmount.value = '';
+
+    if(amount > 0 && loggedAccount.balance >= amount && receiverAcc?.username != loggedAccount.username) {
+        loggedAccount.movements.push(-amount);
+        receiverAcc.movements.push(amount);
+
+        updateUI(loggedAccount);
+    } else {
+        console.log(`TRANSFER ERROR: ${amount}€ to ${receiverAcc?.username}`);
+    }
+
+});
+
+
+
+
+
+
+
+
+let loggedAccount;  // Global variable to store the logged in account
+
 
 createUsernames(accounts);
