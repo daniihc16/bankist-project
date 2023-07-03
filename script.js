@@ -28,7 +28,13 @@ const account4 = {
     pin: 4444,
 };
 
-const accounts = [account1, account2, account3, account4];
+const account5 = {
+    owner: 'Sarah Smith',
+    movements: [4430, 100, 1700, -50, -790],
+    interestRate: 1.3,
+    pin: 5555,
+};
+const accounts = [account1, account2, account3, account4, account5];
 
 // Elements
 const labelWelcome = document.querySelector('.welcome');
@@ -57,10 +63,20 @@ const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
 
-// Creates the usernames for each account owner with the first letter of their names
+// Creates unique usernames for each account based on the owner's name and adds it to the account object.
+// The username is the first letter of each word in the owner's name. If there are more than one account
+// with the same username, a number is added to the end of it.
 const createUsernames = function (accounts) {
-    accounts.forEach(function (acc) {
-        acc.username = acc.owner.toLowerCase().split(' ').map(name => name[0]).join('');
+    accounts.forEach(function (acc, i) {
+        const usernameBase = acc.owner.toLowerCase().split(' ').map(name => name[0]).join('');
+        let usernameFinal = usernameBase;
+
+        // If there are more than one account with the same username, add a number to the end of it
+        while (accounts.slice(0, i).findIndex(acc => acc.username === usernameFinal) != -1) {
+            usernameFinal = usernameBase + Math.trunc(Math.random() * MAX_SAME_USERNAME);
+        }
+
+        acc.username = usernameFinal;
     });
 }
 
@@ -157,13 +173,23 @@ btnTransfer.addEventListener('click', function(event) {
 });
 
 
+// Event handler for the close account button
+btnClose.addEventListener('click', function(event) {
+    event.preventDefault();
+
+    if(loggedAccount.username === inputCloseUsername.value && loggedAccount.pin === Number(inputClosePin.value)) {
+        const index = accounts.findIndex(acc => acc = logged)
+    }
+
+    
+});
 
 
 
 
-
+const MAX_SAME_USERNAME = 100;  // Maximum number of accounts with the same username where a number is added to the end of it
 
 let loggedAccount;  // Global variable to store the logged in account
 
-
 createUsernames(accounts);
+accounts.forEach(acc => console.log(acc));
