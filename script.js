@@ -112,7 +112,10 @@ const createUsernames = function (accounts) {
 const displayMovements = function(account, sort = false) {
     containerMovements.innerHTML = '';
 
-    account.movements.forEach(function(mov, i) {
+    // Sort movements in ascending order if sort is true
+    const movs = sort ? account.movements.slice().sort((a, b) => a - b) : account.movements.slice();
+
+    movs.forEach(function(mov, i) {
         const type = mov > 0 ? 'deposit' : 'withdrawal';
         const html = `
         <div class="movements__row">
@@ -204,28 +207,58 @@ btnTransfer.addEventListener('click', function(event) {
 // Event handler for the close account button
 btnClose.addEventListener('click', function(event) {
     event.preventDefault();
-
+    
     if (inputCloseUsername.value === loggedAccount.username && Number(inputClosePin.value) === loggedAccount.pin) {
         const index = accounts.findIndex(acc => acc.username === loggedAccount.username);
         accounts.splice(index, 1);
 
         // Hide UI
         containerApp.style.opacity = 0;
+    } else {
+        console.log(`CLOSE ACCOUNT ERROR: ${inputCloseUsername.value} ${inputClosePin.value}`);
     }
 
     inputCloseUsername.value = inputClosePin.value = '';    
 });
 
 
+// Event handler for the loan button
+btnLoan.addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const amount = Number(inputLoanAmount.value);
+
+    // Grant loan only if the amount is positive and the logged account has a movement of at least 10% of the requested amount
+    // This is just to show how to use the some() method
+    //! SIDE EFFECT: as we add the movement of the loan to the movements array, the loan is counted as a movement and the user 
+    //! can request a new bigger loan as this last movement wold be bigger than 10% of the new loan
+    //! Example: if the user has a movement of 1000€ and requests a loan of 10000€, the user will have a movement of 10000€ and can request a new loan of 100000€
+    if (amount > 0 && loggedAccount.movements.some(mov => mov >= amount * 0.1)) {
+        loggedAccount.movements.push(amount);
+        updateUI(loggedAccount);
+    } else {
+        console.log(`LOAN ERROR: ${amount}€`);
+    }
+
+    inputLoanAmount.value = '';
+});
 
 
+// Event handler for the sort button
+btnSort.addEventListener('click', function(event) {
+    event.preventDefault();
 
-
+    sorted = !sorted;
+    displayMovements(loggedAccount, sorted);
+});    
+    
+    
 
 // Constants
 const MAX_SAME_USERNAME = 100;  // Maximum number of accounts with the same username where a number is added to the end of it
 
 let loggedAccount;  // Global variable to store the logged in account
+let sorted = false; // Global variable to store if the movements are sorted or not
 
 
 
