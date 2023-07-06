@@ -243,6 +243,19 @@ btnLogin.addEventListener('click', function(event) {
     if (!loggedAccount) console.log('LOGIN ATTEMPT', inputLoginUsername.value, inputLoginPin.value);
     else {
         console.log(`LOGIN SUCCESSFUL as ${loggedAccount.owner}`);
+   
+        // Set the date in the labelDate element formated based on the locale with the hour and minutes
+        labelDate.textContent = new Date().toLocaleString(loggedAccount.locale, {
+            hour: 'numeric',
+            minute: 'numeric',
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+        });
+        
+        // Clear the logout timer and start it again
+        if(loggoutTimer) clearInterval(loggoutTimer);
+        setLogOutTimer();
 
         // Display UI and message
         labelWelcome.textContent = `Welcome back, ${loggedAccount.owner.split(' ')[0]}`;
@@ -277,6 +290,9 @@ btnTransfer.addEventListener('click', function(event) {
         receiverAcc.movements.push(amount);
         receiverAcc.movementsDates.push(new Date().toISOString());
         
+        clearInterval(loggoutTimer);
+        setLogOutTimer();
+
         updateUI(loggedAccount);
     } else {
         console.log(`TRANSFER ERROR: ${amount}€ to ${receiverAcc?.username}`);
@@ -316,7 +332,12 @@ btnLoan.addEventListener('click', function(event) {
     //! Example: if the user has a movement of 1000€ and requests a loan of 10000€, the user will have a movement of 10000€ and can request a new loan of 100000€
     if (amount > 0 && loggedAccount.movements.some(mov => mov >= amount * 0.1)) {
         loggedAccount.movements.push(amount);
-        updateUI(loggedAccount);
+        loggedAccount.movementsDates.push(new Date().toISOString());
+        setTimeout(updateUI.bind(null,loggedAccount), 1000);  // Simulate a delay of 1 second to update the UI
+        console.log(`LOAN SUCCESSFUL: ${amount}€`);
+
+        clearInterval(loggoutTimer);
+        setLogOutTimer();
     } else {
         console.log(`LOAN ERROR: ${amount}€`);
     }
@@ -334,31 +355,34 @@ btnSort.addEventListener('click', function(event) {
 });    
     
 
+// Event handler for the logout timer
+const setLogOutTimer = function () {
+    let time = SESSION_TIMEOUT - 1;
 
+    loggoutTimer = setInterval(function() {
+        labelTimer.textContent = `${String(Math.trunc(time / 60)).padStart(2,0)}:${String(time % 60).padStart(2, '0')}`;
+        time--;
 
-
-
+        if (time < 0) {
+            console.log(`LOGOUT: ${loggedAccount.owner}`);
+            containerApp.style.opacity = 0;
+            clearInterval(loggoutTimer);
+        }
+    }, 1000);
+}
 
     
 
 // Constants
 const MAX_SAME_USERNAME = 100;  // Maximum number of accounts with the same username where a number is added to the end of it
+const SESSION_TIMEOUT = 60 * 5;   // Seconds of inactivity before the user is logged out
 
-let loggedAccount = account1;  // Global variable to store the logged in account
+let loggedAccount;  // Global variable to store the logged in account
+let loggoutTimer;   // Global variable to store the logout timer
 let sorted = false; // Global variable to store if the movements are sorted or not
-updateUI(loggedAccount);
+
 
 
 // Main code
 createUsernames(accounts);
 accounts.forEach(acc => console.log(acc));
-
-// Set the date in the labelDate element formated based on the locale with the hour and minutes
-labelDate.textContent = new Date().toLocaleString(loggedAccount.locale, {
-    hour: 'numeric',
-    minute: 'numeric',
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric'
-});
-
