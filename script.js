@@ -2,40 +2,78 @@
 // Data
 const account1 = {
     owner: 'Daniel Herce',
-    movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
+    movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300],
     interestRate: 1.2, // %
     pin: 1111,
-};
-
-const account2 = {
+  
+    movementsDates: [
+      '2019-11-18T21:31:17.178Z',
+      '2019-12-23T07:42:02.383Z',
+      '2020-01-28T09:15:04.904Z',
+      '2020-04-01T10:17:24.185Z',
+      '2020-05-08T14:11:59.604Z',
+      '2020-05-27T17:01:17.194Z',
+      '2020-07-11T23:36:17.929Z',
+      '2023-07-06T10:51:36.790Z',
+    ],
+    currency: 'EUR',
+    locale: 'pt-PT', // de-DE
+  };
+  
+  const account2 = {
     owner: 'admin',
     movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
     interestRate: 1.5,
     pin: 2222,
-};
-
-const account3 = {
-    owner: 'Steven Thomas Williams',
-    movements: [200, -200, 340, -300, -20, 50, 400, -460],
-    interestRate: 0.7,
-    pin: 3333,
-};
-
-const account4 = {
+  
+    movementsDates: [
+      '2019-11-01T13:15:33.035Z',
+      '2019-11-30T09:48:16.867Z',
+      '2019-12-25T06:04:23.907Z',
+      '2020-01-25T14:18:46.235Z',
+      '2020-02-05T16:33:06.386Z',
+      '2020-04-10T14:43:26.374Z',
+      '2020-06-25T18:49:59.371Z',
+      '2020-07-26T12:01:20.894Z',
+    ],
+    currency: 'USD',
+    locale: 'en-US',
+  };
+  
+  const account3 = {
     owner: 'Sarah Smith',
     movements: [430, 1000, 700, 50, 90],
-    interestRate: 1,
-    pin: 4444,
-};
-
-const account5 = {
+    interestRate: 1.2, // %
+    pin: 3333,
+  
+    movementsDates: [
+      '2019-12-23T07:42:02.383Z',
+      '2020-04-01T10:17:24.185Z',
+      '2020-05-08T14:11:59.604Z',
+      '2020-07-11T23:36:17.929Z',
+      '2020-07-12T10:51:36.790Z',
+    ],
+    currency: 'EUR',
+    locale: 'pt-PT', // de-DE
+  };
+  
+  const account4 = {
     owner: 'Silvia Sulivan',
     movements: [4430, 100, 1700, -50, -790],
-    interestRate: 1.3,
-    pin: 5555,
-};
-const accounts = [account1, account2, account3, account4, account5];
-
+    interestRate: 1.5,
+    pin: 4444,
+  
+    movementsDates: [
+      '2019-12-25T06:04:23.907Z',
+      '2020-01-25T14:18:46.235Z',
+      '2020-02-05T16:33:06.386Z',
+      '2020-04-10T14:43:26.374Z',
+      '2020-07-26T12:01:20.894Z',
+    ],
+    currency: 'USD',
+    locale: 'en-US',
+  };
+  const accounts = [account1, account2, account3, account4];
 
 
 
@@ -108,20 +146,49 @@ const createUsernames = function (accounts) {
 }
 
 
+// Formats the date based on the locale
+const formatDate = function(date, locale) {
+    
+    const daysPassed = Math.round(Math.abs(new Date() - date) / (1000 * 60 * 60 * 24));
+    switch (daysPassed) {
+        case 0:
+            return 'Today';
+            break;
+        case 1:
+            return 'Yesterday';
+            break;
+        default:
+            return new Intl.DateTimeFormat(locale).format(date);
+    }
+}
+
+
+// Formats the currency based on the locale
+const formatCurrency = function(value, locale, currency) {
+    return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency
+    }).format(value);
+}
+
+
 // Displays movements in the containerMovements element
 const displayMovements = function(account, sort = false) {
     containerMovements.innerHTML = '';
 
     // Sort movements in ascending order if sort is true
     const movs = sort ? account.movements.slice().sort((a, b) => a - b) : account.movements.slice();
-
+    
     movs.forEach(function(mov, i) {
+        const backgroundColor = i % 2 === 0 ? 'background-color: #ebeef2' : '';
         const type = mov > 0 ? 'deposit' : 'withdrawal';
+        const movDate = new Date(account.movementsDates[i]);
+        
         const html = `
-        <div class="movements__row">
+        <div class="movements__row " style="${backgroundColor}">
             <div class="movements__type movements__type--${type}">${i+1} ${type}</div>
-            <div class="movements__date">3 days ago</div>
-            <div class="movements__value">${mov}€</div>
+            <div class="movements__date">${formatDate(movDate, account.locale)}</div>
+            <div class="movements__value">${formatCurrency(mov, account.locale, account.currency)}</div>
         </div>`;
 
         containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -132,17 +199,26 @@ const displayMovements = function(account, sort = false) {
 // Displays the balance in the labelBalance element
 const calcDisplayBalance = function(account) {
     updateAccountBalance(account);
-    labelBalance.textContent = `${account.balance}€`;
+    labelBalance.textContent = `${formatCurrency(account.balance, account.locale, account.currency)}`;
 }
 
 
 // Displays the summary in the labelSumIn, labelSumOut, labelSumInterest elements
 const calcDisplaySummary = function(account) {
-    labelSumIn.textContent = `${account.movements.filter(mov => mov > 0).reduce((acc, mov) => acc + mov)}€`
-    labelSumOut.textContent = `${Math.abs(account.movements.filter(mov => mov < 0).reduce((acc, mov) => acc + mov))}€`
-    labelSumInterest.textContent = `${account.movements.filter(mov => mov > 0)
-                                        .map((mov => (mov * account.interestRate) / 100))
-                                        .reduce((acc, mov) => acc + mov)}€`
+    labelSumIn.textContent = `${formatCurrency(
+        account.movements.filter(mov => mov > 0).reduce((acc, mov) => acc + mov).toFixed(2),
+        account.locale, account.currency)}`
+    
+    labelSumOut.textContent = `${formatCurrency(
+        Math.abs(account.movements.filter(mov => mov < 0).reduce((acc, mov) => acc + mov)).toFixed(2), 
+        account.locale, account.currency)}`
+    
+    labelSumInterest.textContent = `${formatCurrency(
+        account.movements.filter(mov => mov > 0)
+        .map((mov => (mov * account.interestRate) / 100))
+        .reduce((acc, mov) => acc + mov).toFixed(2)
+        , account.locale, account.currency)}`
+
 }
 
 // Updates the UI with the account data
@@ -194,8 +270,13 @@ btnTransfer.addEventListener('click', function(event) {
     // Transfer money only if the amount is positive, the logged account has enough money and the receiver account exists and is not the same as the logged account
     if(amount > 0 && loggedAccount.balance >= amount && receiverAcc && receiverAcc?.username != loggedAccount.username) {
         console.log(`TRANSFER SUCCESSFUL: ${amount}€ to ${receiverAcc?.username}`);
+        
         loggedAccount.movements.push(-amount);
+        loggedAccount.movementsDates.push(new Date().toISOString());
+        
         receiverAcc.movements.push(amount);
+        receiverAcc.movementsDates.push(new Date().toISOString());
+        
         updateUI(loggedAccount);
     } else {
         console.log(`TRANSFER ERROR: ${amount}€ to ${receiverAcc?.username}`);
@@ -252,16 +333,32 @@ btnSort.addEventListener('click', function(event) {
     displayMovements(loggedAccount, sorted);
 });    
     
+
+
+
+
+
+
     
 
 // Constants
 const MAX_SAME_USERNAME = 100;  // Maximum number of accounts with the same username where a number is added to the end of it
 
-let loggedAccount;  // Global variable to store the logged in account
+let loggedAccount = account1;  // Global variable to store the logged in account
 let sorted = false; // Global variable to store if the movements are sorted or not
-
+updateUI(loggedAccount);
 
 
 // Main code
 createUsernames(accounts);
 accounts.forEach(acc => console.log(acc));
+
+// Set the date in the labelDate element formated based on the locale with the hour and minutes
+labelDate.textContent = new Date().toLocaleString(loggedAccount.locale, {
+    hour: 'numeric',
+    minute: 'numeric',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric'
+});
+
